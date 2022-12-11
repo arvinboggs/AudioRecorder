@@ -1,0 +1,103 @@
+﻿@page "/"
+@inject IJSRuntime mJS
+
+<PageTitle>Audio Recorder</PageTitle>
+
+<h1>Audio Recorder</h1>
+<hr />
+<button @onclick="butRecordAudioStart_Click" class="btn btn-primary" disabled=@mDisableRecordAudioStart>Start Record</button>
+<button @onclick="butRecordAudioPause_Click" class="btn btn-primary" disabled=@mDisableRecordAudioPause>Pause</button>
+<button @onclick="butRecordAudioResume_Click" class="btn btn-primary" disabled=@mDisableRecordAudioResume>Resume</button>
+<button @onclick="butRecordAudioStop_Click" class="btn btn-primary" disabled=@mDisableRecordAudioStop>Stop</button>
+<button @onclick="butDownloadBlob_Click" class="btn btn-primary" disabled=@mDisableDownloadBlob>Download Audio</button>
+<hr />
+<audio controls autoplay src=@mUrl></audio>
+<hr />
+
+<div class="alert alert-secondary mt-4">
+    <span class="oi oi-pencil me-2" aria-hidden="true"></span>
+    <strong></strong>
+
+    <span class="text-nowrap">
+        Read the tutorial and download the source code from 
+        <a target="_blank" class="font-weight-bold link-dark" href="https://github.com/arvinboggs/BlazorGitHubPages">https://github.com/arvinboggs/BlazorGitHubPages</a>
+    </span>
+    
+</div>
+
+@code {
+    string mUrl;
+    public const string FormatDateTimeStamp = "yyyy_MM_dd__HH_mm_ss_ffff";
+    bool mDisableRecordAudioStart;
+    bool mDisableRecordAudioPause = true;
+    bool mDisableRecordAudioResume = true;
+    bool mDisableRecordAudioStop = true;
+    bool mDisableDownloadBlob = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        await mJS.InvokeVoidAsync("BlazorAudioRecorder.Initialize", DotNetObjectReference.Create(this));
+
+    }
+    void butRecordAudioStart_Click()
+    {
+        mUrl = "";
+        mDisableRecordAudioStart = true;
+        mDisableRecordAudioPause = false;
+        mDisableRecordAudioResume = true;
+        mDisableRecordAudioStop = false;
+        mDisableDownloadBlob = true;
+        mJS.InvokeVoidAsync("BlazorAudioRecorder.StartRecord");
+    }
+
+    void butRecordAudioPause_Click()
+    {
+        mDisableRecordAudioStart = true;
+        mDisableRecordAudioPause = true;
+        mDisableRecordAudioResume = false;
+        mDisableRecordAudioStop = false;
+        mDisableDownloadBlob = true;
+        mJS.InvokeVoidAsync("BlazorAudioRecorder.PauseRecord");
+    }
+
+    void butRecordAudioResume_Click()
+    {
+        mDisableRecordAudioStart = true;
+        mDisableRecordAudioPause = false;
+        mDisableRecordAudioResume = true;
+        mDisableRecordAudioStop = false;
+        mDisableDownloadBlob = true;
+        mJS.InvokeVoidAsync("BlazorAudioRecorder.ResumeRecord");
+    }
+
+    void butRecordAudioStop_Click()
+    {
+        mDisableRecordAudioStart = false;
+        mDisableRecordAudioPause = true;
+        mDisableRecordAudioResume = true;
+        mDisableRecordAudioStop = true;
+        mDisableDownloadBlob = false;
+        mJS.InvokeVoidAsync("BlazorAudioRecorder.StopRecord");
+    }
+
+    void butDownloadBlob_Click()
+    {
+        mJS.InvokeVoidAsync("BlazorAudioRecorder.DownloadBlob", mUrl, "MyRecording_" + DateTimeStamp() + ".mp3");
+    }
+
+    [JSInvokable]
+    public async Task OnAudioUrl(string vUrl)
+    {
+        mUrl = vUrl;
+        await InvokeAsync(() => StateHasChanged());
+    }
+
+    public static string DateTimeStamp()
+    {
+        var pOut = DateTime.Now.ToString(FormatDateTimeStamp);
+        return pOut;
+    }
+
+
+}
